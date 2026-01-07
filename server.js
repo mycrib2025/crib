@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 5000;
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
-    credentials: true
+    credentials: true,
   })
 );
 
@@ -40,11 +40,10 @@ app.use("/api/world-access", worldAccessRoutes);
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL,
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+  },
 });
 
-// 🔐 Socket auth
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) return next(new Error("No token"));
@@ -58,17 +57,17 @@ io.use((socket, next) => {
   }
 });
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.user.id);
 
   socket.on("join-world", ({ worldId }) => {
     socket.join(worldId);
   });
 
-  socket.on("world-message", data => {
+  socket.on("world-message", (data) => {
     io.to(data.worldId).emit("world-message", {
       ...data,
-      userId: socket.user.id
+      userId: socket.user.id,
     });
   });
 
@@ -77,7 +76,6 @@ io.on("connection", socket => {
   });
 });
 
-// Allow controllers to emit socket events
 app.set("io", io);
 
 /* ---------- 404 ---------- */
@@ -85,12 +83,12 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-/* ---------- ERROR HANDLER (LAST) ---------- */
+/* ---------- ERROR HANDLER ---------- */
 app.use(errorHandler);
 
 /* ---------- START SERVER ---------- */
 connectDB().then(() => {
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, () => {
     console.log(`🚀 Backend running on port ${PORT}`);
   });
 });
