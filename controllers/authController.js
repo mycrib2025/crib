@@ -3,32 +3,30 @@ import World from "../models/World.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-/* ================= REGISTER ================= */
+/* ---------- REGISTER ---------- */
 export const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
     // Check existing user
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "Email already exists" });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = new User({
+    const user = await User.create({
       username,
       email,
       password: hashedPassword,
     });
 
-    const savedUser = await user.save();
-
     // Create default world
-    const world = new World({
-      owner: savedUser._id,
+    await World.create({
+      owner: user._id,
       name: `${username}'s World`,
       mood: "dreamy",
       stars: true,
@@ -38,23 +36,14 @@ export const registerUser = async (req, res) => {
       dreamIntensity: 50,
     });
 
-    await world.save();
-
-    res.status(201).json({
-      message: "Profile created",
-      user: {
-        id: savedUser._id,
-        username: savedUser.username,
-        email: savedUser.email,
-      },
-    });
-  } catch (error) {
-    console.error("REGISTER ERROR:", error);
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
     res.status(500).json({ message: "Registration failed" });
   }
 };
 
-/* ================= LOGIN ================= */
+/* ---------- LOGIN ---------- */
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -83,8 +72,8 @@ export const loginUser = async (req, res) => {
         email: user.email,
       },
     });
-  } catch (error) {
-    console.error("LOGIN ERROR:", error);
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Login failed" });
   }
 };
