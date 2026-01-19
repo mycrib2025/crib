@@ -20,9 +20,20 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 /* ---------- CORS ---------- */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://crib-frontend.onrender.com",
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -39,8 +50,12 @@ app.use("/api/world-access", worldAccessRoutes);
 /* ---------- SOCKET.IO ---------- */
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: [
+      "http://localhost:5173",
+      "https://crib-frontend.onrender.com",
+    ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
