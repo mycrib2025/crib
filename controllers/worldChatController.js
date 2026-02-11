@@ -1,3 +1,4 @@
+import sanitizeHtml from "sanitize-html";
 import World from "../models/World.js";
 import WorldChatMessage from "../models/WorldChatMessage.js";
 import { canAccessWorld } from "../utils/canAccessWorld.js";
@@ -9,6 +10,11 @@ export const sendWorldMessage = async (req, res) => {
   const { worldId } = req.params;
   const { message } = req.body;
 
+  const cleanMessage = sanitizeHtml(message, {
+  allowedTags: [],
+  allowedAttributes: {},
+});
+
   const world = await World.findById(worldId);
   if (!world) return res.status(404).json({ message: "World not found" });
 
@@ -19,7 +25,8 @@ export const sendWorldMessage = async (req, res) => {
   const chat = await WorldChatMessage.create({
     world: worldId,
     sender: req.user.id,
-    message
+    message: cleanMessage
+
   });
 
   const io = req.app.get("io");
@@ -47,3 +54,4 @@ export const getWorldMessages = async (req, res) => {
 
   res.json(messages);
 };
+

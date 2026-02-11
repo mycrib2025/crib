@@ -1,3 +1,6 @@
+import World from "./models/World.js";
+import { canAccessWorld } from "./utils/canAccessWorld.js";
+import rateLimit from "express-rate-limit";
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -75,8 +78,22 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.user.id);
 
-  socket.on("join-world", ({ worldId }) => {
+  socket.on("join-world", async ({ worldId }) => {
+  try {
+    const world = await World.findById(worldId);
+    if (!world) return;
+
+    if (!canAccessWorld(world, socket.user.id)) return;
+
     socket.join(worldId);
+  } catch (err) {
+    console.error("Socket join error:", err);
+  }
+  });
+
+  socket.on("world-mood-update", ({ worldId, mood }) => {
+  console.log("🌈 Mood update:", worldId, mood);
+  socket.to(worldId).emit("world-mood-update", mood);
   });
 
   socket.on("world-message", (data) => {
@@ -107,3 +124,20 @@ connectDB().then(() => {
     console.log(`🚀 Backend running on port ${PORT}`);
   });
 });
+
+// 🛑 Global rate limit
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+  })
+);
+
+// 🔐 Auth rate limit (stricter)
+app.use(
+  "/api/auth",
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+  })
+);
