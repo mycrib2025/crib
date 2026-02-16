@@ -15,6 +15,7 @@ import authRoutes from "./routes/authRoutes.js";
 import worldChatRoutes from "./routes/worldChatRoutes.js";
 import worldAccessRoutes from "./routes/worldAccessRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import moodRoutes from "./routes/mood.js";
 
 dotenv.config();
 
@@ -43,12 +44,29 @@ app.use(
 
 app.use(express.json());
 
+// 🛑 Global rate limit
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+  })
+);
+
 /* ---------- ROUTES ---------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/worlds", worldRoutes);
 app.use("/api/world-chat", worldChatRoutes);
 app.use("/api/world-access", worldAccessRoutes);
+app.use("/api/mood", moodRoutes);
+
+/* ---------- 404 ---------- */
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+/* ---------- ERROR HANDLER ---------- */
+app.use(errorHandler);
 
 /* ---------- SOCKET.IO ---------- */
 const io = new Server(server, {
@@ -110,28 +128,12 @@ io.on("connection", (socket) => {
 
 app.set("io", io);
 
-/* ---------- 404 ---------- */
-app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
-
-/* ---------- ERROR HANDLER ---------- */
-app.use(errorHandler);
-
 /* ---------- START SERVER ---------- */
 connectDB().then(() => {
   server.listen(PORT, () => {
     console.log(`🚀 Backend running on port ${PORT}`);
   });
 });
-
-// 🛑 Global rate limit
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
 
 // 🔐 Auth rate limit (stricter)
 app.use(
