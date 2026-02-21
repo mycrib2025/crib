@@ -14,8 +14,9 @@ import worldRoutes from "./routes/worldRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import worldChatRoutes from "./routes/worldChatRoutes.js";
 import worldAccessRoutes from "./routes/worldAccessRoutes.js";
+import moodRoutes from "./routes/moodRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import moodRoutes from "./routes/mood.js";
+
 
 dotenv.config();
 
